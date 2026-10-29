@@ -1,0 +1,56 @@
+[package]
+name = "duckdb-asn1"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.89"
+license = "MIT"
+description = "DuckDB loadable extension: ASN.1 BER/CER/DER structural decoder, openssl-style dump, OID resolve, validation, and canonical re-encoding, in SQL"
+
+[lib]
+name = "asn1"
+crate-type = ["cdylib"]
+
+# Packaging tool (copied from quack-rs, std-only): stamps the 534-byte DuckDB
+# extension metadata footer onto the built cdylib to produce the loadable
+# .duckdb_extension. `cargo run --bin append_metadata`.
+[[bin]]
+name = "append_metadata"
+path = "src-bin/append_metadata/main.rs"
+
+[dependencies]
+# quack-rs — pure-Rust wrapper over DuckDB's C Extension API (crates.io).
+# 0.18.0 is the version this code was written and tested against; pinned
+# exactly so the reviewed ABI-wrapper version can never float under a caret
+# requirement.
+quack-rs = "=0.18.0"
+# C extension API headers/symbols; the cdylib resolves them against the host
+# DuckDB process at LOAD time.
+libduckdb-sys = { version = "1.10504", features = ["loadable-extension"] }
+
+# Engine (asn1_core/, verbatim from the Query-farm vgi-asn1 asn1-core crate,
+# MIT): a panic-free generic BER/CER/DER TLV codec + OID registry + JSON /
+# openssl-asn1parse-style dump renderers + validation + canonical re-encode,
+# no Arrow, no VGI. Kept as a separate path crate so its internal `crate::`
+# paths are unchanged.
+asn1-core = { path = "asn1_core" }
+
+[dev-dependencies]
+# SQL-level integration tests: InMemoryDb compiles a real bundled DuckDB so the
+# built .duckdb_extension can be LOADed inside `cargo test`.
+#
+# The 1.1050x line bundles a C++11-compatible DuckDB source tree that quack-rs
+# compiles with `-std=c++11`. A floating `duckdb = "1.1.0"` would resolve to a
+# newer minor that bundles C++17 and fails that build. `libduckdb-sys` must
+# stay on the 1.1050x line.
+quack-rs = { version = "=0.18.0", features = ["bundled-test"] }
+duckdb = { version = "=1.10506.0", features = ["bundled"] }
+
+[profile.release]
+# `unwind`, not `abort`: every callback is wrapped in quack-rs's
+# panic-safe `*_callback!` macros (catch_unwind -> set_error), so a panic in
+# extension code becomes a DuckDB error instead of aborting the host process.
+panic = "unwind"
+lto = true
+codegen-units = 1
+opt-level = 3
+strip = true

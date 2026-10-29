@@ -1,0 +1,15 @@
+[package]
+name = "asn1-core"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.89"
+license = "MIT"
+description = "Pure-compute ASN.1 BER/CER/DER TLV codec + OID registry + JSON/dump renderers + validation (ported verbatim from Query-farm vgi-asn1, no Arrow / no VGI deps)"
+
+[dependencies]
+serde_json = { version = "1.0", features = ["preserve_order"] }
+base64 = "0.23"
+sha2 = "0.11"
+
+[lints.rust]
+unsafe_code = "forbid"
