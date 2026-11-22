@@ -31,6 +31,27 @@ VARCHAR / BOOLEAN / BLOB / flat STRUCT you can filter, join and aggregate on.
 Useful for cert-trust audits, CRL/OCSP triage, Kerberos ticket forensics, and
 any pipeline that ingests binary protocol captures into a database.
 
+## Install
+
+Once accepted into [DuckDB's community extensions](https://github.com/duckdb/community-extensions):
+
+```sql
+INSTALL asn1 FROM community;
+LOAD asn1;
+```
+
+Until it lands in the community registry, build from source:
+
+```bash
+git clone https://github.com/alitrack/duckdb-asn1 && cd duckdb-asn1
+git submodule update --init --recursive
+make release          # -> build/release/asn1.duckdb_extension
+```
+
+```sql
+LOAD 'path/to/asn1.duckdb_extension';
+```
+
 ## Functions
 
 | Function | Returns | Notes |
